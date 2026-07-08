@@ -5,14 +5,18 @@ from sqlalchemy.orm import Session
 
 from . import models  # noqa: F401  (register models on Base)
 from .config import get_settings
-from .database import Base, SessionLocal, engine, get_db
+from .database import SessionLocal, get_db
+from .db_migrate import run_migrations
 from .models import User
 from .routers import auth, projects, tasks
 from .security import decode_token
 
 settings = get_settings()
 
-Base.metadata.create_all(bind=engine)
+if settings.jwt_secret in ("dev-secret-change-me", "change-me-to-a-long-random-string"):
+    print("WARNING: JWT_SECRET is a placeholder — set a strong secret in the environment.")
+
+run_migrations()
 
 if settings.seed_on_start:
     from .seed import seed

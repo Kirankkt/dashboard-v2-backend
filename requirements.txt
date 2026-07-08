@@ -6,3 +6,4 @@ pydantic-settings
 python-dotenv
 bcrypt
 python-jose[cryptography]
+alembic
