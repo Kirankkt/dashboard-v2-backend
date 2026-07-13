@@ -27,6 +27,11 @@ class TaskStatus(str, enum.Enum):
     done = "done"
 
 
+class TaskPriority(str, enum.Enum):
+    normal = "normal"
+    high = "high"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -67,6 +72,9 @@ class Task(Base):
     start_date = Column(Date, index=True, nullable=False)
     end_date = Column(Date, nullable=True)
     status = Column(Enum(TaskStatus), nullable=False, default=TaskStatus.todo)
+    priority = Column(
+        Enum(TaskPriority), nullable=False, default=TaskPriority.normal, server_default="normal"
+    )
     progress = Column(Integer, nullable=False, default=0)
     updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

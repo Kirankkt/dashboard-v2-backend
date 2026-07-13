@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from .models import TaskStatus, UserRole
+from .models import TaskPriority, TaskStatus, UserRole
 
 
 # ---------- Auth ----------
@@ -53,6 +53,7 @@ class TaskCreate(BaseModel):
     start_date: date
     end_date: Optional[date] = None
     status: TaskStatus = TaskStatus.todo
+    priority: TaskPriority = TaskPriority.normal
     progress: int = 0
 
 
@@ -65,6 +66,7 @@ class TaskUpdate(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     status: Optional[TaskStatus] = None
+    priority: Optional[TaskPriority] = None
     progress: Optional[int] = None
 
 
@@ -81,6 +83,7 @@ class TaskOut(BaseModel):
     start_date: date
     end_date: Optional[date]
     status: TaskStatus
+    priority: TaskPriority
     progress: int
     updated_by: Optional[int]
     created_at: datetime
