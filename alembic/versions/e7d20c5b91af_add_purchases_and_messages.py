@@ -20,10 +20,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    # NOTE: don't pre-create the enum — on Postgres, create_table emits
+    # CREATE TYPE itself, and a second create crashes the migration. Drop any
+    # orphaned type a previously failed run may have left behind (no table
+    # references it yet, so this is safe).
+    if op.get_bind().dialect.name == 'postgresql':
+        op.execute('DROP TYPE IF EXISTS purchasestatus')
     purchase_status = sa.Enum(
         'to_order', 'ordered', 'in_transit', 'delivered', 'cancelled', name='purchasestatus'
     )
-    purchase_status.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         'purchases',
