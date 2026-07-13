@@ -8,7 +8,7 @@ from .config import get_settings
 from .database import SessionLocal, get_db
 from .db_migrate import run_migrations
 from .models import User
-from .routers import auth, projects, tasks
+from .routers import auth, messages, projects, purchases, tasks
 from .security import decode_token
 
 settings = get_settings()
@@ -71,6 +71,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
+app.include_router(purchases.router)
+app.include_router(messages.router)
 
 
 @app.get("/health")

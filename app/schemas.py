@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from .models import TaskPriority, TaskStatus, UserRole
+from .models import PurchaseStatus, TaskPriority, TaskStatus, UserRole
 
 
 # ---------- Auth ----------
@@ -108,3 +108,64 @@ class RolloverResult(BaseModel):
     moved: int
     cutoff: date
     moved_to: date
+
+
+# ---------- Purchases ----------
+class PurchaseCreate(BaseModel):
+    item: str
+    supplier: str = ""
+    cost: float = 0.0
+    order_date: Optional[date] = None
+    expected_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    status: PurchaseStatus = PurchaseStatus.to_order
+
+
+class PurchaseUpdate(BaseModel):
+    item: Optional[str] = None
+    supplier: Optional[str] = None
+    cost: Optional[float] = None
+    order_date: Optional[date] = None
+    expected_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    status: Optional[PurchaseStatus] = None
+
+
+class PurchaseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    project_id: int
+    item: str
+    supplier: str
+    cost: float
+    order_date: Optional[date]
+    expected_date: Optional[date]
+    arrival_date: Optional[date]
+    status: PurchaseStatus
+    updated_by: Optional[int]
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Messages ----------
+class MessageCreate(BaseModel):
+    body: str
+
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    sender_id: int
+    body: str
+    created_at: datetime
+    read_at: Optional[datetime]
+
+
+class UnreadCount(BaseModel):
+    unread: int
+
+
+class MarkReadResult(BaseModel):
+    marked: int

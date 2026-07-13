@@ -32,6 +32,14 @@ class TaskPriority(str, enum.Enum):
     high = "high"
 
 
+class PurchaseStatus(str, enum.Enum):
+    to_order = "to_order"
+    ordered = "ordered"
+    in_transit = "in_transit"
+    delivered = "delivered"
+    cancelled = "cancelled"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -83,3 +91,40 @@ class Task(Base):
     )
 
     project = relationship("Project", back_populates="tasks")
+
+
+class Purchase(Base):
+    __tablename__ = "purchases"
+
+    id = Column(Integer, primary_key=True)
+    project_id = Column(
+        Integer, ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    item = Column(String, nullable=False)
+    supplier = Column(String, nullable=False, default="")
+    cost = Column(Float, nullable=False, default=0.0)
+    order_date = Column(Date, nullable=True)
+    expected_date = Column(Date, nullable=True)
+    arrival_date = Column(Date, nullable=True)
+    status = Column(
+        Enum(PurchaseStatus), nullable=False, default=PurchaseStatus.to_order,
+        server_default="to_order",
+    )
+    updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True)
+    project_id = Column(
+        Integer, ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    body = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    read_at = Column(DateTime(timezone=True), nullable=True)
