@@ -1,14 +1,17 @@
-"""Single source of truth for off-days (Sundays + fixed holidays).
+"""Single source of truth for off-days.
 
 The old app duplicated this logic across frontend and backend and warned they
 had to be kept in sync. Here it lives once, on the server, and the frontend is
 expected to consume it via the API (see /project/off-days) rather than copy it.
+
+Currently only Sundays are off — the user asked to drop fixed holidays for now.
+To re-enable holidays later, set HOLIDAYS = FUTURE_HOLIDAYS (and confirm the
+dates still apply; this list came from the old app).
 """
 
 from datetime import date, timedelta
 
-# Fixed holidays as (month, day).
-HOLIDAYS = {
+FUTURE_HOLIDAYS = {
     (12, 24),
     (12, 25),
     (12, 26),
@@ -21,6 +24,9 @@ HOLIDAYS = {
     (5, 1),
     (5, 27),
 }
+
+# Active off-day holidays (none for now — Sundays only).
+HOLIDAYS: set[tuple[int, int]] = set()
 
 
 def is_off(d: date) -> bool:
