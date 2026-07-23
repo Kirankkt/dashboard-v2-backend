@@ -21,6 +21,10 @@ from .projects import get_project
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
+# The client schedules the build from the Gantt chart, which only exposes the
+# task name and its two dates. Everything else stays contractor-only.
+CLIENT_EDITABLE = {"name", "start_date", "end_date"}
+
 
 def _reconcile(task: Task, status_set: bool, progress_set: bool) -> None:
     """Progress is the single source of truth; status is derived from it
@@ -152,12 +156,17 @@ def get_task(
 def update_task(
     task_id: int,
     payload: TaskUpdate,
-    user: User = Depends(require_role(UserRole.contractor)),
+    user: User = Depends(require_role(UserRole.contractor, UserRole.client)),
     db: Session = Depends(get_db),
 ):
     project = get_project(db)
     task = _get_task(db, project, task_id)
     data = payload.model_dump(exclude_unset=True)
+    if user.role is UserRole.client and not set(data) <= CLIENT_EDITABLE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Clients can only edit a task's name and dates",
+        )
     for field, value in data.items():
         setattr(task, field, value)
     task.updated_by = user.id
