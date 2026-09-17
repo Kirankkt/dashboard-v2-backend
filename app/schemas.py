@@ -25,6 +25,8 @@ class UserOut(BaseModel):
     email: str
     role: UserRole
     created_at: datetime
+    # Whether this user may do everything the contractor can (see deps.py).
+    full_access: bool = False
 
 
 # ---------- Project ----------

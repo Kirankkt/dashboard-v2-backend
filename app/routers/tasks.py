@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_user, require_role
+from ..deps import get_current_user, has_full_access, require_role
 from ..models import Project, Task, TaskStatus, User, UserRole
 from ..schemas import (
     GridEntry,
@@ -165,7 +165,7 @@ def update_task(
     project = get_project(db)
     task = _get_task(db, project, task_id)
     data = payload.model_dump(exclude_unset=True)
-    if user.role is UserRole.client and not set(data) <= CLIENT_EDITABLE:
+    if not has_full_access(user) and not set(data) <= CLIENT_EDITABLE:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Clients can only edit a task's name and dates",

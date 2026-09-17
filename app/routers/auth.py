@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_current_user, has_full_access
 from ..models import User
 from ..schemas import LoginRequest, TokenResponse, UserOut
 from ..security import create_access_token, verify_password
@@ -23,7 +23,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
-    return user
+    return UserOut.model_validate(user).model_copy(update={"full_access": has_full_access(user)})
 
 
 @router.post("/logout")
