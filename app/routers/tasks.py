@@ -29,12 +29,15 @@ CLIENT_EDITABLE = {"name", "start_date", "end_date"}
 def _reconcile(task: Task, status_set: bool, progress_set: bool) -> None:
     """Progress is the single source of truth; status is derived from it
     (0 -> todo, 1..99 -> in_progress, 100 -> done). An explicit status with no
-    progress given is a shortcut for the boundary values."""
+    progress given is a shortcut: done -> 100, todo -> 0, and in_progress -> 50
+    when progress is sitting at either boundary."""
     if status_set and not progress_set:
         if task.status == TaskStatus.done:
             task.progress = 100
         elif task.status == TaskStatus.todo:
             task.progress = 0
+        elif task.progress <= 0 or task.progress >= 100:
+            task.progress = 50
     task.progress = max(0, min(100, task.progress))
     if task.progress >= 100:
         task.status = TaskStatus.done
