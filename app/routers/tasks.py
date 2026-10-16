@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date, timedelta
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -11,12 +11,10 @@ from ..models import Project, Task, TaskStatus, User, UserRole
 from ..schemas import (
     GridEntry,
     GridView,
-    RolloverResult,
     TaskCreate,
     TaskOut,
     TaskUpdate,
 )
-from ..workdays import next_workday
 from .projects import get_project
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -29,15 +27,15 @@ CLIENT_EDITABLE = {"name", "start_date", "end_date"}
 def _reconcile(task: Task, status_set: bool, progress_set: bool) -> None:
     """Progress is the single source of truth; status is derived from it
     (0 -> todo, 1..99 -> in_progress, 100 -> done). An explicit status with no
-    progress given is a shortcut: done -> 100, todo -> 0, and in_progress -> 50
-    when progress is sitting at either boundary."""
+    progress given is a shortcut: done -> 100, todo -> 0, and in_progress -> 10
+    (just started) when progress is sitting at either boundary."""
     if status_set and not progress_set:
         if task.status == TaskStatus.done:
             task.progress = 100
         elif task.status == TaskStatus.todo:
             task.progress = 0
         elif task.progress <= 0 or task.progress >= 100:
-            task.progress = 50
+            task.progress = 10
     task.progress = max(0, min(100, task.progress))
     if task.progress >= 100:
         task.status = TaskStatus.done
@@ -98,37 +96,6 @@ def grid(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
 
 
 # ---------- Writes (contractor only) ----------
-@router.post("/rollover", response_model=RolloverResult)
-def rollover(
-    cutoff: Optional[date] = Query(None, description="Defaults to today"),
-    user: User = Depends(require_role(UserRole.contractor)),
-    db: Session = Depends(get_db),
-):
-    """Advance every unfinished task starting on/before `cutoff` to the next
-    working day after `cutoff`, preserving each task's duration."""
-    project = get_project(db)
-    cutoff = cutoff or date.today()
-    target = next_workday(cutoff)
-    tasks = (
-        db.query(Task)
-        .filter(
-            Task.project_id == project.id,
-            Task.start_date <= cutoff,
-            Task.status != TaskStatus.done,
-        )
-        .all()
-    )
-    moved = 0
-    for t in tasks:
-        duration = (t.end_date - t.start_date) if t.end_date else None
-        t.start_date = target
-        t.end_date = (target + duration) if duration is not None else None
-        t.updated_by = user.id
-        moved += 1
-    db.commit()
-    return RolloverResult(moved=moved, cutoff=cutoff, moved_to=target)
-
-
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
 def create_task(
     payload: TaskCreate,

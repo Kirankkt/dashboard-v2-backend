@@ -105,13 +105,6 @@ class GridView(BaseModel):
     entries: List[GridEntry]
 
 
-# ---------- Rollover ----------
-class RolloverResult(BaseModel):
-    moved: int
-    cutoff: date
-    moved_to: date
-
-
 # ---------- Purchases ----------
 class PurchaseCreate(BaseModel):
     item: str

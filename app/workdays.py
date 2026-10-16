@@ -34,14 +34,6 @@ def is_off(d: date) -> bool:
     return d.weekday() == 6 or (d.month, d.day) in HOLIDAYS
 
 
-def next_workday(d: date) -> date:
-    """The first working day strictly after `d`."""
-    nxt = d + timedelta(days=1)
-    while is_off(nxt):
-        nxt += timedelta(days=1)
-    return nxt
-
-
 def off_days_between(start: date, end: date) -> list[date]:
     """All off-days in the inclusive range [start, end]."""
     out = []
