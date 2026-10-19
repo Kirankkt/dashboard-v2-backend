@@ -45,6 +45,27 @@ def _reconcile(task: Task, status_set: bool, progress_set: bool) -> None:
         task.status = TaskStatus.todo
 
 
+def _validate(task: Task) -> None:
+    """The forms already refuse these, but the API shouldn't depend on that:
+    a blank row or a task that finishes before it starts is something every
+    screen then has to render."""
+    task.name = (task.name or "").strip()
+    task.area = (task.area or "").strip()
+    if not task.name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A task needs a name."
+        )
+    if not task.area:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A task needs an area."
+        )
+    if task.end_date and task.end_date < task.start_date:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="The finish date can't be before the start date.",
+        )
+
+
 def _get_task(db: Session, project: Project, task_id: int) -> Task:
     task = (
         db.query(Task)
@@ -106,6 +127,7 @@ def create_task(
     provided = payload.model_dump(exclude_unset=True)
     task = Task(project_id=project.id, updated_by=user.id, **payload.model_dump())
     _reconcile(task, status_set="status" in provided, progress_set="progress" in provided)
+    _validate(task)
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -141,6 +163,7 @@ def update_task(
         setattr(task, field, value)
     task.updated_by = user.id
     _reconcile(task, status_set="status" in data, progress_set="progress" in data)
+    _validate(task)
     db.commit()
     db.refresh(task)
     return task
