@@ -11,7 +11,11 @@ class Settings(BaseSettings):
 
     jwt_secret: str = "dev-secret-change-me"
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 720  # 12h
+    # 30 days. A 12h token expired in the middle of the working day: every
+    # save after that failed, and a contractor logging the day's progress had
+    # no idea why. Long sessions are the point here — two known users, one
+    # private project.
+    access_token_expire_minutes: int = 43200
 
     # Comma-separated list, or "*" for any origin.
     cors_origins: str = "*"
